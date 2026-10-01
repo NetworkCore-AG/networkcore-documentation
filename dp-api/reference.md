@@ -13,8 +13,8 @@ show live availability and prices, start and stop charging, follow sessions live
 
 - **Data**: locations, live availability and prices. No money moves and no sessions start. Fits
   maps, POI display and route planners.
-- **Full charging**: everything in Data, plus starting and stopping sessions, live session events
-  and a read-only view of the money.
+- **Full charging**: everything in Data, plus starting and stopping sessions and live session
+  events.
 
 | Group | Data | Full charging |
 | --- | --- | --- |
@@ -22,7 +22,6 @@ show live availability and prices, start and stop charging, follow sessions live
 | [Prices](#prices) | ✓ | ✓ |
 | [Data webhooks](#data-webhooks) | ✓ | ✓ |
 | [Sessions](#sessions) | | ✓ |
-| [Money](#money-read-only) | | ✓ |
 | [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
 
 ## Conventions
@@ -294,46 +293,11 @@ Report a refund, chargeback or wrong charge on a session.
 | `reason` | |
 | `evidence_url` | |
 
-## Money (read only)
-
-### `GET /receivables`
-
-What you owe per session, and whether it has been paid.
-
-| Query | Meaning |
-| --- | --- |
-| `status` | `OPEN`, `PARTIALLY_PAID`, `PAID`, `PAID_OUT`, `DISPUTED` |
-| `order_id` | |
-| `from`, `to` | Session end date |
-
-```json
-{
-  "data": [{
-    "session_id": "ses_7Hq2Lx",
-    "order_id": "ORDER-20261001-000231",
-    "pricing_mode": "PUBLIC",
-    "gross": 371.00, "currency": "MXN",
-    "your_share": 18.55, "gateway_fee": 14.47,
-    "status": "PAID",
-    "payin_id": "pin_20261003_0007"
-  }]
-}
-```
-
-### `GET /payins`
-
-Deposits we received from you and which sessions each one covered.
-
-### `GET /payouts`
-
-What we paid you, when, with the SPEI tracking key.
-
 ## Charging webhooks and live stream
 
 | Event | When |
 | --- | --- |
 | `session.started` · `session.updated` · `session.completed` · `session.failed` | Live session events. `session.updated` every few minutes with kWh and cost so far. |
-| `receivable.created` · `receivable.paid` · `payout.sent` | Money events, each carrying your `order_id` |
 
 ```json
 {
