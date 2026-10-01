@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.title and page.title != site.title %}{{ page.title }} · {% endif %}{{ site.title }}</title>
+<meta name="description" content="{{ site.description }}">
+<style>
+:root { --bg: #fff; --fg: #16202c; --muted: #5b6878; --line: #dde2e9; --code: #f2f4f8; --accent: #1d5bd6; color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0f141b; --fg: #e6ebf2; --muted: #93a0b2; --line: #2a3442; --code: #1c2531; --accent: #7aa7ff; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+nav { font-size: 0.9rem; margin-bottom: 24px; }
+a { color: var(--accent); }
+h1, h2, h3 { line-height: 1.25; }
+h2 { margin-top: 2.2em; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.88em; }
+:not(pre) > code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+pre { background: var(--code); padding: 12px; border-radius: 6px; overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--line); color: var(--muted); }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2.5em 0; }
+.mermaid { background: transparent; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<nav><a href="{{ '/' | relative_url }}">NetworkCore Docs</a></nav>
+{{ content }}
+</main>
+<script type="module">
+const blocks = document.querySelectorAll("pre > code.language-mermaid");
+if (blocks.length) {
+  const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  blocks.forEach(code => { const div = document.createElement("div"); div.className = "mermaid"; div.textContent = code.textContent; code.parentElement.replaceWith(div); });
+  mermaid.initialize({ startOnLoad: false, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" });
+  await mermaid.run();
+}
+</script>
+</body>
+</html>
