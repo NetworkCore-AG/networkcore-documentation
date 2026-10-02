@@ -22,6 +22,8 @@ show live availability and prices, start and stop charging, follow sessions live
 | [Prices](#prices) | ✓ | ✓ |
 | [Data webhooks](#data-webhooks) | ✓ | ✓ |
 | [Sessions](#sessions) | | ✓ |
+| [Receipts and tax invoices](#receipts-and-tax-invoices) | | ✓ |
+| [Disputes](#disputes) | | ✓ |
 | [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
 
 ## Conventions
@@ -29,7 +31,7 @@ show live availability and prices, start and stop charging, follow sessions live
 ### Your order ID
 
 Every session carries `order_id`: your own order or transaction ID. It is required, unique per
-partner, and comes back on every session, webhook, receivable and dispute. Sending the same
+partner, and comes back on every session, webhook, tax invoice and dispute. Sending the same
 `order_id` twice replays the first answer instead of starting a second charge.
 
 ### Errors
@@ -50,6 +52,16 @@ One shape everywhere:
 
 - `limit` and `offset`, with `total_count` in the response.
 - `updated_since` returns only what changed, for cheap delta syncs.
+
+### Settlement and reconciliation
+
+Every session carries your `order_id` and its final amounts, so you can match it in your own
+system. Settlements and session detail are in the NetworkCore portal, with CSV export. A Settlement
+API is available on request.
+
+### Examples
+
+IDs, tax IDs and amounts in examples are illustrative.
 
 ### Session lifecycle
 
@@ -216,6 +228,7 @@ Start charging. We send the start command to the charger.
 | `charge_point_id` **required** | OCPI EVSE uid |
 | `connector_id` **required** | |
 | `driver_ref` **required** | Your stable ID for the driver |
+| `billing_details` | Optional. Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details). |
 
 ```json
 HTTP 201
@@ -248,7 +261,26 @@ HTTP 201
 
 ### `GET /sessions/{id}`
 
-One session, live: energy so far, cost so far, status. Same shape as the `POST /sessions` response.
+One session, live: energy so far, cost so far, status.
+
+```json
+{
+  "data": {
+    "id": "ses_7Hq2Lx",
+    "order_id": "ORDER-20261001-000231",
+    "status": "COMPLETED",
+    "location_id": "LOC-CDMX-0142",
+    "charge_point_id": "MX*EXA*E0142A",
+    "connector_id": "1",
+    "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
+    "kwh": 40.2, "currency": "MXN", "total_cost": 372.78,
+    "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
+    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" },
+    "created_at": "2026-10-01T15:30:02Z",
+    "updated_at": "2026-10-01T16:12:44Z"
+  }
+}
+```
 
 Errors: `SESSION_NOT_FOUND` 404
 
@@ -282,6 +314,62 @@ Wholesale partners only: the price you charged your driver.
 | `amount` **required** | Incl. IVA |
 | `currency` **required** | |
 
+## Receipts and tax invoices
+
+Every public price session gets a receipt automatically. The tax invoice is issued automatically
+once you send the driver's billing details, at session start or afterwards. For wholesale sessions
+you are the seller, so you issue your own.
+
+### `GET /sessions/{id}/receipt`
+
+Returns the receipt PDF.
+
+### `PUT /sessions/{id}/billing_details`
+
+Send or correct the driver's tax data.
+
+| Body field | Meaning |
+| --- | --- |
+| `tax_id` **required** | e.g. RFC in Mexico |
+| `legal_name` **required** | |
+| `postal_code` **required** | |
+| `tax_regime` **required in Mexico** | |
+| `invoice_use` **required in Mexico** | |
+| `email` | Where to send the tax invoice |
+| `country` | ISO code, e.g. `MX` |
+
+```json
+{
+  "data": {
+    "session_id": "ses_7Hq2Lx",
+    "order_id": "ORDER-20261001-000231",
+    "tax_invoice": { "status": "REQUESTED" }
+  }
+}
+```
+
+| Error | HTTP |
+| --- | --- |
+| `INVALID_BILLING_DETAILS` | 422 |
+| `TAX_INVOICE_NOT_AVAILABLE` (wholesale session) | 409 |
+| `TAX_INVOICE_ALREADY_ISSUED` | 409 |
+| `SESSION_NOT_FOUND` | 404 |
+
+### `GET /sessions/{id}/tax_invoice`
+
+Returns the tax invoice PDF once issued.
+
+| Error | HTTP |
+| --- | --- |
+| `TAX_INVOICE_NOT_READY` | 409 |
+| `SESSION_NOT_FOUND` | 404 |
+
+### Event `tax_invoice.issued`
+
+Carries `order_id` and the tax invoice `url`.
+
+## Disputes
+
 ### `POST /sessions/{id}/disputes`
 
 Report a refund, chargeback or wrong charge on a session.
@@ -291,7 +379,51 @@ Report a refund, chargeback or wrong charge on a session.
 | `type` **required** | `REFUND`, `CHARGEBACK`, `BILLING_ERROR` |
 | `amount` **required** | Disputed amount |
 | `reason` | |
-| `evidence_url` | |
+
+```json
+{
+  "data": {
+    "id": "dsp_31Kc",
+    "session_id": "ses_7Hq2Lx",
+    "order_id": "ORDER-20261001-000231",
+    "type": "CHARGEBACK",
+    "amount": 120.00,
+    "currency": "MXN",
+    "status": "UNDER_REVIEW"
+  }
+}
+```
+
+### `GET /disputes/{id}`
+
+One dispute. `status` is `UNDER_REVIEW`, `ACCEPTED` or `REJECTED`. Once decided, the response
+carries the outcome:
+
+```json
+{
+  "data": {
+    "id": "dsp_31Kc",
+    "session_id": "ses_7Hq2Lx",
+    "order_id": "ORDER-20261001-000231",
+    "type": "CHARGEBACK",
+    "amount": 120.00,
+    "currency": "MXN",
+    "status": "ACCEPTED",
+    "outcome": { "amount": 120.00, "currency": "MXN", "effect": "SET_OFF_NEXT_SETTLEMENT" }
+  }
+}
+```
+
+Errors: `DISPUTE_NOT_FOUND` 404
+
+### `GET /sessions/{id}/evidence`
+
+Returns the evidence PDF for a chargeback: session timeline, meter values, the operator's charge
+record and our checks.
+
+### Event `dispute.updated`
+
+Carries `order_id`, `status` and `outcome`.
 
 ## Charging webhooks and live stream
 
@@ -307,7 +439,9 @@ Report a refund, chargeback or wrong charge on a session.
   "data": {
     "id": "ses_7Hq2Lx", "order_id": "ORDER-20261001-000231",
     "status": "COMPLETED", "kwh": 40.2,
-    "total_cost": 372.78, "currency": "MXN"
+    "total_cost": 372.78, "currency": "MXN",
+    "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
+    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" }
   }
 }
 ```

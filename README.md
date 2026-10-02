@@ -2,7 +2,7 @@
 
 NetworkCore connects charge point operators (CPOs) with distribution partners (DPs) such as
 mobility apps, fleets and car makers. CPOs connect once over OCPI 2.2.1. Partners integrate one
-REST API to find chargers, start charging and follow the money.
+REST API to find chargers, start charging and follow every session live.
 
 ## Guides
 
