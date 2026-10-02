@@ -75,7 +75,7 @@ with `whsec_`), shown once. All events go to that endpoint.
 }
 ```
 
-**Verifying signatures.** We follow the [Standard Webhooks](https://www.standardwebhooks.com) spec.
+**Verifying signatures.** We follow the Standard Webhooks spec.
 Each request carries three headers: `webhook-id`, `webhook-timestamp` and `webhook-signature`. The
 signature is an HMAC-SHA256 of `{webhook-id}.{webhook-timestamp}.{raw body}` using your secret,
 base64-encoded and prefixed with `v1,`. Use the official Standard Webhooks library for your
