@@ -53,6 +53,48 @@ One shape everywhere:
 - `limit` and `offset`, with `total_count` in the response.
 - `updated_since` returns only what changed, for cheap delta syncs.
 
+### Webhooks
+
+**Setup.** Register one HTTPS endpoint in the NetworkCore portal. You get a signing secret (starts
+with `whsec_`), shown once. All events go to that endpoint.
+
+**Payload.** Every event has `id`, `type`, `created_at` and `data`:
+
+```json
+{
+  "id": "evt_01J9XK2",
+  "type": "session.completed",
+  "created_at": "2026-10-01T16:12:44Z",
+  "data": {
+    "id": "ses_7Hq2Lx", "order_id": "ORDER-20261001-000231",
+    "status": "COMPLETED", "kwh": 40.2,
+    "total_cost": 372.78, "currency": "MXN",
+    "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
+    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" }
+  }
+}
+```
+
+**Verifying signatures.** We follow the [Standard Webhooks](https://www.standardwebhooks.com) spec.
+Each request carries three headers: `webhook-id`, `webhook-timestamp` and `webhook-signature`. The
+signature is an HMAC-SHA256 of `{webhook-id}.{webhook-timestamp}.{raw body}` using your secret,
+base64-encoded and prefixed with `v1,`. Use the official Standard Webhooks library for your
+language, or compute it yourself. Reject requests whose timestamp is more than 5 minutes old.
+
+```js
+import { Webhook } from "standardwebhooks";
+const wh = new Webhook(process.env.NETWORKCORE_WEBHOOK_SECRET);
+const event = wh.verify(rawBody, headers); // throws if the signature is invalid
+```
+
+**Delivery rules.**
+
+- Respond with any `2xx` within 10 seconds. Do slow work after responding.
+- We retry failed deliveries with increasing delays for up to 24 hours.
+- Delivery is at least once: use `webhook-id` to ignore duplicates.
+- Order is not guaranteed: compare `updated_at`, or read the session with `GET /sessions/{id}`.
+- Secret rotation: when you rotate in the portal, old and new secrets both work for 24 hours.
+
 ### Settlement and reconciliation
 
 Every session carries your `order_id` and its final amounts, so you can match it in your own
