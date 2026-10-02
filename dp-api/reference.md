@@ -85,6 +85,9 @@ PENDING → ACTIVE → COMPLETED
 
 Chargers near a point or inside a map area, with live status.
 
+<details markdown="1">
+<summary>Optional parameters</summary>
+
 | Query | Meaning |
 | --- | --- |
 | `lat`, `lng`, `radius_km` | Search around a point |
@@ -95,6 +98,8 @@ Chargers near a point or inside a map area, with live status.
 | `available_only` | `true` to hide busy or broken chargers |
 | `updated_since` | Only locations changed since this time |
 | `limit`, `offset` | Paging |
+
+</details>
 
 ```json
 {
@@ -130,7 +135,15 @@ Light status feed for keeping a map fresh without re-downloading locations.
 | Query | Meaning |
 | --- | --- |
 | `updated_since` **required** | Status changes since this time |
+
+<details markdown="1">
+<summary>Optional parameters</summary>
+
+| Query | Meaning |
+| --- | --- |
 | `limit`, `offset` | Paging |
+
+</details>
 
 ```json
 {
@@ -148,10 +161,15 @@ Light status feed for keeping a map fresh without re-downloading locations.
 
 Every CPO tariff on the network, as structured price components.
 
+<details markdown="1">
+<summary>Optional parameters</summary>
+
 | Query | Meaning |
 | --- | --- |
 | `updated_since` | Only tariffs changed since this time |
 | `limit`, `offset` | Paging |
+
+</details>
 
 ```json
 {
@@ -186,8 +204,16 @@ What a charge will cost your driver at this connector, with your agreement appli
 | `location_id` **required** | |
 | `charge_point_id` **required** | |
 | `connector_id` **required** | |
+
+<details markdown="1">
+<summary>Optional fields</summary>
+
+| Body field | Meaning |
+| --- | --- |
 | `estimate.kwh` | Expected energy, e.g. `40` |
 | `estimate.minutes` | Expected duration, for time-based prices |
+
+</details>
 
 ```json
 {
@@ -228,7 +254,15 @@ Start charging. We send the start command to the charger.
 | `charge_point_id` **required** | OCPI EVSE uid |
 | `connector_id` **required** | |
 | `driver_ref` **required** | Your stable ID for the driver |
-| `billing_details` | Optional. Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details). |
+
+<details markdown="1">
+<summary>Optional fields</summary>
+
+| Body field | Meaning |
+| --- | --- |
+| `billing_details` | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details). |
+
+</details>
 
 ```json
 HTTP 201
@@ -288,12 +322,17 @@ Errors: `SESSION_NOT_FOUND` 404
 
 Your sessions.
 
+<details markdown="1">
+<summary>Optional parameters</summary>
+
 | Query | Meaning |
 | --- | --- |
 | `status` | `PENDING`, `ACTIVE`, `COMPLETED`, `FAILED` |
 | `updated_since` | Only sessions changed since this time |
 | `order_id` | Look up a session by your order ID |
 | `limit`, `offset` | Paging |
+
+</details>
 
 ### `POST /sessions/{id}/stop`
 
@@ -335,8 +374,16 @@ Send or correct the driver's tax data.
 | `postal_code` **required** | |
 | `tax_regime` **required in Mexico** | |
 | `invoice_use` **required in Mexico** | |
+
+<details markdown="1">
+<summary>Optional fields</summary>
+
+| Body field | Meaning |
+| --- | --- |
 | `email` | Where to send the tax invoice |
 | `country` | ISO code, e.g. `MX` |
+
+</details>
 
 ```json
 {
@@ -378,7 +425,15 @@ Report a refund, chargeback or wrong charge on a session.
 | --- | --- |
 | `type` **required** | `REFUND`, `CHARGEBACK`, `BILLING_ERROR` |
 | `amount` **required** | Disputed amount |
+
+<details markdown="1">
+<summary>Optional fields</summary>
+
+| Body field | Meaning |
+| --- | --- |
 | `reason` | |
+
+</details>
 
 ```json
 {
