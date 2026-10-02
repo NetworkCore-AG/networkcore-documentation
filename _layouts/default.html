@@ -19,6 +19,10 @@ code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; fo
 pre { background: var(--code); padding: 12px; border-radius: 6px; overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
 th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+details { margin: 12px 0; }
+summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+summary:hover { color: var(--fg); }
+details[open] > summary { margin-bottom: 8px; }
 blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--line); color: var(--muted); }
 hr { border: 0; border-top: 1px solid var(--line); margin: 2.5em 0; }
 .mermaid { background: transparent; text-align: center; }
