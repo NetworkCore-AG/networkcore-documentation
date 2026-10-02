@@ -7,7 +7,7 @@ show live availability and prices, start and stop charging, follow every session
 | --- | --- |
 | Base URL | `https://dp.networkcore.org` |
 | Auth | `Authorization: Bearer <api_key>` |
-| Format | JSON, amounts incl. IVA, ISO 8601 UTC |
+| Format | JSON, amounts incl. VAT, ISO 8601 UTC |
 
 ## Integration levels
 
@@ -22,9 +22,9 @@ show live availability and prices, start and stop charging, follow every session
 | [Prices](#prices) | ✓ | ✓ |
 | [Data webhooks](#data-webhooks) | ✓ | ✓ |
 | [Sessions](#sessions) | | ✓ |
+| [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
 | [Receipts and tax invoices](#receipts-and-tax-invoices) | | ✓ |
 | [Disputes](#disputes) | | ✓ |
-| [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
 
 ## Conventions
 
@@ -392,8 +392,33 @@ Wholesale partners only: the price you charged your driver.
 
 | Body field | Meaning |
 | --- | --- |
-| `amount` **required** | Incl. IVA |
+| `amount` **required** | Incl. VAT |
 | `currency` **required** | |
+
+## Charging webhooks and live stream
+
+| Event | When |
+| --- | --- |
+| `session.started` · `session.updated` · `session.completed` · `session.failed` | Live session events. `session.updated` every few minutes with kWh and cost so far. |
+
+```json
+{
+  "id": "evt_01J9XK2",
+  "type": "session.completed",
+  "created_at": "2026-10-01T16:12:44Z",
+  "data": {
+    "id": "ses_7Hq2Lx", "order_id": "ORDER-20261001-000231",
+    "status": "COMPLETED", "kwh": 40.2,
+    "total_cost": 372.78, "currency": "MXN",
+    "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
+    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" }
+  }
+}
+```
+
+### `GET /events`
+
+Optional server-sent events stream with the same events, for live in-app screens.
 
 <details class="section" id="receipts-and-tax-invoices" markdown="1">
 <summary>Receipts and tax invoices</summary>
@@ -511,28 +536,3 @@ record and our checks.
 Carries `order_id`, `status` and `outcome`.
 
 </details>
-
-## Charging webhooks and live stream
-
-| Event | When |
-| --- | --- |
-| `session.started` · `session.updated` · `session.completed` · `session.failed` | Live session events. `session.updated` every few minutes with kWh and cost so far. |
-
-```json
-{
-  "id": "evt_01J9XK2",
-  "type": "session.completed",
-  "created_at": "2026-10-01T16:12:44Z",
-  "data": {
-    "id": "ses_7Hq2Lx", "order_id": "ORDER-20261001-000231",
-    "status": "COMPLETED", "kwh": 40.2,
-    "total_cost": 372.78, "currency": "MXN",
-    "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
-    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" }
-  }
-}
-```
-
-### `GET /events`
-
-Optional server-sent events stream with the same events, for live in-app screens.
