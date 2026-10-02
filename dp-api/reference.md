@@ -353,7 +353,8 @@ Wholesale partners only: the price you charged your driver.
 | `amount` **required** | Incl. IVA |
 | `currency` **required** | |
 
-## Receipts and tax invoices
+<details class="section" id="receipts-and-tax-invoices" markdown="1">
+<summary>Receipts and tax invoices</summary>
 
 Every public price session gets a receipt automatically. The tax invoice is issued automatically
 once you send the driver's billing details, at session start or afterwards. For wholesale sessions
@@ -374,16 +375,8 @@ Send or correct the driver's tax data.
 | `postal_code` **required** | |
 | `tax_regime` **required in Mexico** | |
 | `invoice_use` **required in Mexico** | |
-
-<details markdown="1">
-<summary>Optional fields</summary>
-
-| Body field | Meaning |
-| --- | --- |
 | `email` | Where to send the tax invoice |
 | `country` | ISO code, e.g. `MX` |
-
-</details>
 
 ```json
 {
@@ -415,7 +408,10 @@ Returns the tax invoice PDF once issued.
 
 Carries `order_id` and the tax invoice `url`.
 
-## Disputes
+</details>
+
+<details class="section" id="disputes" markdown="1">
+<summary>Disputes</summary>
 
 ### `POST /sessions/{id}/disputes`
 
@@ -425,15 +421,7 @@ Report a refund, chargeback or wrong charge on a session.
 | --- | --- |
 | `type` **required** | `REFUND`, `CHARGEBACK`, `BILLING_ERROR` |
 | `amount` **required** | Disputed amount |
-
-<details markdown="1">
-<summary>Optional fields</summary>
-
-| Body field | Meaning |
-| --- | --- |
 | `reason` | |
-
-</details>
 
 ```json
 {
@@ -479,6 +467,8 @@ record and our checks.
 ### Event `dispute.updated`
 
 Carries `order_id`, `status` and `outcome`.
+
+</details>
 
 ## Charging webhooks and live stream
 

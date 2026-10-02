@@ -23,6 +23,9 @@ details { margin: 12px 0; }
 summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
 summary:hover { color: var(--fg); }
 details[open] > summary { margin-bottom: 8px; }
+details.section { margin: 2.2em 0 0; border-bottom: 1px solid var(--line); }
+details.section > summary { color: var(--fg); font-size: 1.5rem; font-weight: 600; line-height: 1.25; padding-bottom: 6px; }
+details.section[open] > summary { margin-bottom: 1em; }
 blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--line); color: var(--muted); }
 hr { border: 0; border-top: 1px solid var(--line); margin: 2.5em 0; }
 .mermaid { background: transparent; text-align: center; }
@@ -33,6 +36,15 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5em 0; }
 <nav><a href="{{ '/' | relative_url }}">NetworkCore Docs</a></nav>
 {{ content }}
 </main>
+<script>
+// A link to a collapsed section (e.g. from the levels table) opens it.
+function openTarget() {
+  const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView(); }
+}
+addEventListener("hashchange", openTarget);
+addEventListener("DOMContentLoaded", openTarget);
+</script>
 <script type="module">
 const blocks = document.querySelectorAll("pre > code.language-mermaid");
 if (blocks.length) {
