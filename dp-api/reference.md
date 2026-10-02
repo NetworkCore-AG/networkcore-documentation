@@ -1,7 +1,7 @@
 # DP API reference
 
 One API for distribution partners such as mobility apps, fleets and car makers: find chargers,
-show live availability and prices, start and stop charging, follow sessions live and see the money.
+show live availability and prices, start and stop charging, follow every session live.
 
 | | |
 | --- | --- |
