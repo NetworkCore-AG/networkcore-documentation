@@ -329,12 +329,13 @@ HTTP 201
 | Error | HTTP |
 | --- | --- |
 | `MISSING_FIELD` | 422 |
+| `DUPLICATE_REFERENCE` (same `order_id`, different request) | 422 |
 | `LOCATION_NOT_FOUND` | 404 |
 | `CHARGE_POINT_NOT_FOUND` | 404 |
 | `CONNECTOR_NOT_FOUND` | 404 |
 | `CHARGE_POINT_OCCUPIED` | 409 |
-| `REFERENCE_CONFLICT` | 409 |
 | `REQUEST_IN_PROGRESS` | 409 |
+| `TOKEN_ERROR` (driver could not be authorized at the operator) | 502 |
 | `SESSION_START_FAILED` | 502 |
 
 ### `GET /sessions/{id}`
