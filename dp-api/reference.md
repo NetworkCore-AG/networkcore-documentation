@@ -3,6 +3,8 @@
 One API for distribution partners such as mobility apps, fleets and car makers: find chargers,
 show live availability and prices, start and stop charging, follow every session live.
 
+> Test first in the [Sandbox](/sandbox.html). Simulated stations, no real money.
+
 | | |
 | --- | --- |
 | Base URL | `https://dp.networkcore.org` |

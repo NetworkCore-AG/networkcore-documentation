@@ -10,6 +10,7 @@ REST API to find chargers, start charging and follow every session live.
 | --- | --- |
 | [CPO onboarding](cpo/onboarding.md) | Charge point operators connecting their network over OCPI 2.2.1 |
 | [DP API reference](dp-api/reference.md) | Distribution partners building on the NetworkCore API |
+| [Sandbox](sandbox.md) | Testing an integration before going live, for both partners and CPOs |
 
 ## Endpoints
 
