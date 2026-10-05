@@ -6,6 +6,8 @@ charging starts.
 NetworkCore connects to your network as an **eMSP** over **OCPI 2.2.1**. Drivers reach your
 chargers through NetworkCore's distribution partners; you keep operating your network as usual.
 
+> Before going live, run the [CPO sandbox checklist](/sandbox.html#charge-point-operators).
+
 ## Before you start
 
 You need an OCPI 2.2.1 endpoint reachable over HTTPS that implements these modules:
