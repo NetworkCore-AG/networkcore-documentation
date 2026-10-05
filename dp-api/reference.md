@@ -402,7 +402,7 @@ Wholesale partners only: the price you charged your driver.
 
 | Event | When |
 | --- | --- |
-| `session.started` · `session.updated` · `session.completed` · `session.failed` | Live session events. `session.updated` every few minutes with kWh and cost so far. |
+| `session.started` · `session.updated` · `session.completed` · `session.failed` | Live session events. `session.updated` every few seconds with kWh and cost so far. |
 
 ```json
 {
