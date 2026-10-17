@@ -4,7 +4,7 @@ Test your integration before going live. Simulated stations, no real energy, no 
 
 | | Sandbox | Production |
 |---|---|---|
-| Base URL | `[SANDBOX_URL]` | `[PRODUCTION_URL]` |
+| Base URL | `https://dp.networkcore.org` | `https://dp.networkcore.org` |
 | Keys | `nc_test_` keys | `nc_live_` keys |
 
 Sandbox and production keys are separate. Ask your NetworkCore contact for yours.
