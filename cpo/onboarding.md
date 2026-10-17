@@ -62,26 +62,29 @@ response returns.
 
 ## Step 3. Authentication
 
-All OCPI calls use the standard header, with the token Base64-encoded:
+All OCPI calls use the standard header:
 
 ```
-Authorization: Token <base64 token>
+Authorization: Token <token>
 ```
 
-- You call NetworkCore with **Token B**.
-- NetworkCore calls you with **Token C**.
+- You call NetworkCore with **Token B**, as is or Base64-encoded.
+- NetworkCore calls you with **Token C**, Base64-encoded. In the handshake it sends **Token A** as is.
 
 Requests and responses carry `X-Request-ID` and `X-Correlation-ID`. NetworkCore echoes yours back,
 or generates one if you did not send it.
 
 ## Step 4. Locations and tariffs
 
-- **Locations** are pulled from your `locations` endpoint.
+- **Locations** are pulled from your `locations` endpoint. To keep status live, push changes with
+  `PUT` or `PATCH` on `/2.2.1/locations/{country_code}/{party_id}/{location_id}`, adding
+  `/{evse_uid}` and `/{connector_id}` for a single charge point or connector.
 - **Tariffs** are pulled from your `tariffs` endpoint every hour. To publish a change sooner, push
   it to NetworkCore with `PUT /2.2.1/tariffs/{country_code}/{party_id}/{tariff_id}`.
 
 List endpoints must support OCPI pagination: NetworkCore follows `Link: <...>; rel="next"` until
 the last page. Always set `last_updated`; NetworkCore keeps the newest version of each tariff.
+Each connector needs a valid `REGULAR` tariff, or one with no type, before charging can start.
 
 ## Charging flow
 
@@ -123,6 +126,7 @@ sequenceDiagram
 - **Always set `last_updated`** on sessions. Updates older than the stored version are ignored.
 - **CDR IDs are final.** The first CDR received for an ID is kept, and a resend with the same ID
   does not replace it. Credit CDRs are held for manual review.
+- **Include the totals in every CDR:** `total_cost.incl_vat`, `total_energy` and `total_time`.
 - **Price CDRs with the published tariff.** NetworkCore checks every CDR against the tariff in
   force when the session started and holds CDRs that drift from it.
 
@@ -137,6 +141,7 @@ Base URL: `https://ocpi.networkcore.org`. Interactive reference: `https://ocpi.n
 | `POST` | `/2.2.1/commands/{uid}` | Command results (your `response_url`) |
 | `POST` | `/2.2.1/tokens/{uid}/authorize` | Real-time token authorization |
 | `PUT` | `/2.2.1/tariffs/{country_code}/{party_id}/{tariff_id}` | Tariff push |
+| `PUT` `PATCH` | `/2.2.1/locations/{country_code}/{party_id}/{location_id}[/{evse_uid}[/{connector_id}]]` | Location, charge point and connector push |
 | `GET` `PUT` `PATCH` | `/2.2.1/sessions/{country_code}/{party_id}/{session_id}` | Session push and read |
 | `POST` | `/2.2.1/cdrs` | CDR push |
 
