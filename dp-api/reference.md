@@ -18,6 +18,9 @@ show live availability and prices, start and stop charging, follow every session
 - **Full charging**: everything in Data, plus starting and stopping sessions and live session
   events.
 
+A read API key gives Data, a write key gives Full charging. Keys start with `nc_live_`, or
+`nc_test_` for the [Sandbox](/sandbox.html).
+
 | Group | Data | Full charging |
 | --- | --- | --- |
 | [Locations and availability](#locations-and-availability) | ✓ | ✓ |
@@ -27,14 +30,19 @@ show live availability and prices, start and stop charging, follow every session
 | [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
 | [Receipts and tax invoices](#receipts-and-tax-invoices) | | ✓ |
 | [Disputes](#disputes) | | ✓ |
+| [Payments (optional)](#payments) | | ✓ |
 
 ## Conventions
 
-### Your order ID
+### Your reference
 
-Every session carries `order_id`: your own order or transaction ID. It is required, unique per
+Every session carries `reference`: your own order or transaction ID. It is required, unique per
 partner, and comes back on every session, webhook, tax invoice and dispute. Sending the same
-`order_id` twice replays the first answer instead of starting a second charge.
+`reference` twice replays the first answer instead of starting a second charge.
+
+### Charging partner
+
+The company that runs the chargers. Locations show it as `charging_partner`.
 
 ### Errors
 
@@ -44,6 +52,9 @@ One shape everywhere:
 { "error": { "code": "CHARGE_POINT_OCCUPIED",
              "message": "Charge point EVSE-01 already has an active session." } }
 ```
+
+A missing or invalid key returns `401 UNAUTHORIZED`. A read key on a write endpoint returns
+`403 FORBIDDEN`.
 
 ### Headers
 
@@ -57,10 +68,11 @@ One shape everywhere:
 
 ### Webhooks
 
-**Setup.** Register one HTTPS endpoint in the NetworkCore portal. You get a signing secret (starts
+**Setup.** Ask NetworkCore to register one HTTPS endpoint for you. You get a signing secret (starts
 with `whsec_`), shown once. All events go to that endpoint.
 
-**Payload.** Every event has `id`, `type`, `created_at` and `data`:
+**Payload.** Every event has `id`, `type`, `created_at` and `data`. Session events carry the same
+body as `GET /sessions/{id}`:
 
 ```json
 {
@@ -68,11 +80,19 @@ with `whsec_`), shown once. All events go to that endpoint.
   "type": "session.completed",
   "created_at": "2026-10-01T16:12:44Z",
   "data": {
-    "id": "ses_7Hq2Lx", "order_id": "ORDER-20261001-000231",
-    "status": "COMPLETED", "kwh": 40.2,
-    "total_cost": 372.78, "currency": "MXN",
+    "id": "ses_7Hq2Lx",
+    "reference": "ORDER-20261001-000231",
+    "status": "COMPLETED",
+    "location_id": "LOC-CDMX-0142",
+    "charge_point_id": "MX*EXA*E0142A",
+    "connector_id": "1",
+    "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
+    "kwh": 40.2, "currency": "MXN",
+    "total_cost": 372.78, "total_cost_status": "FINAL",
     "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
-    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" }
+    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" },
+    "created_at": "2026-10-01T15:30:02Z",
+    "updated_at": "2026-10-01T16:12:44Z"
   }
 }
 ```
@@ -95,11 +115,11 @@ const event = wh.verify(rawBody, headers); // throws if the signature is invalid
 - We retry failed deliveries with increasing delays for up to 24 hours.
 - Delivery is at least once: use `webhook-id` to ignore duplicates.
 - Order is not guaranteed: compare `updated_at`, or read the session with `GET /sessions/{id}`.
-- Secret rotation: when you rotate in the portal, old and new secrets both work for 24 hours.
+- Secret rotation: when the secret is rotated, old and new secrets both work for 24 hours.
 
 ### Settlement and reconciliation
 
-Every session carries your `order_id` and its final amounts, so you can match it in your own
+Every session carries your `reference` and its final amounts, so you can match it in your own
 system. Settlements and session detail are in the NetworkCore portal, with CSV export. A Settlement
 API is available on request.
 
@@ -150,7 +170,7 @@ Chargers near a point or inside a map area, with live status.
   "data": [{
     "id": "LOC-CDMX-0142",
     "name": "Example Plaza, Level 2",
-    "operator": { "id": "MX*EXA", "name": "Example CPO" },
+    "charging_partner": { "id": "MX*EXA", "name": "Example CPO" },
     "address": "Av. Ejemplo 100, Ciudad de México",
     "coordinates": { "lat": 19.4402, "lng": -99.2038 },
     "country": "MX", "time_zone": "America/Mexico_City",
@@ -203,7 +223,8 @@ Light status feed for keeping a map fresh without re-downloading locations.
 
 ### `GET /tariffs`
 
-Every CPO tariff on the network, as structured price components.
+Every CPO tariff on the network, as structured price components. Prices are what you pay under
+your agreement, VAT included.
 
 <details markdown="1">
 <summary>Optional parameters</summary>
@@ -248,16 +269,8 @@ What a charge will cost your driver at this connector, with your agreement appli
 | `location_id` **required** | |
 | `charge_point_id` **required** | |
 | `connector_id` **required** | |
-
-<details markdown="1">
-<summary>Optional fields</summary>
-
-| Body field | Meaning |
-| --- | --- |
-| `estimate.kwh` | Expected energy, e.g. `40` |
-| `estimate.minutes` | Expected duration, for time-based prices |
-
-</details>
+| `estimate.kwh` | Expected energy, e.g. `40`. Needed when the price is per kWh. |
+| `estimate.minutes` | Expected duration. Needed for time-based prices. |
 
 ```json
 {
@@ -265,7 +278,6 @@ What a charge will cost your driver at this connector, with your agreement appli
     "currency": "MXN",
     "pricing_mode": "PUBLIC",
     "total_incl_vat": 371.00,
-    "vat": 51.17,
     "breakdown": [
       { "type": "ENERGY", "quantity": 40, "unit": "kWh", "amount": 356.00 },
       { "type": "FLAT",   "quantity": 1,  "unit": "session", "amount": 15.00 }
@@ -275,13 +287,15 @@ What a charge will cost your driver at this connector, with your agreement appli
 }
 ```
 
+`pricing_mode` is `PUBLIC`, `PUBLIC_DISCOUNT`, `PUBLIC_FIX` or `WHOLESALE`.
+
 ## Data webhooks
 
 | Event | When |
 | --- | --- |
-| `evse.status_changed` | A charge point became available, busy or out of order |
-| `location.updated` | A location was added, changed or removed |
-| `tariff.updated` | A CPO changed a price |
+| `evse.status_changed` | A charge point became available, busy or out of order. Same item as `GET /availability`. |
+| `location.updated` | A location was added, changed or removed. Carries `location_id`; read `GET /locations/{id}`. |
+| `tariff.updated` | A CPO changed a price. Carries `tariff_id`; read `GET /tariffs/{id}`. |
 
 ---
 
@@ -293,7 +307,7 @@ Start charging. We send the start command to the charger.
 
 | Body field | Meaning |
 | --- | --- |
-| `order_id` **required** | Your order ID. Unique per partner. Same ID = same answer. |
+| `reference` **required** | Your order ID. Unique per partner. Same reference = same answer. |
 | `location_id` **required** | |
 | `charge_point_id` **required** | OCPI EVSE uid |
 | `connector_id` **required** | |
@@ -313,13 +327,13 @@ HTTP 201
 {
   "data": {
     "id": "ses_7Hq2Lx",
-    "order_id": "ORDER-20261001-000231",
+    "reference": "ORDER-20261001-000231",
     "status": "PENDING",
     "location_id": "LOC-CDMX-0142",
     "charge_point_id": "MX*EXA*E0142A",
     "connector_id": "1",
     "start_time": null, "end_time": null,
-    "kwh": 0, "currency": "MXN", "total_cost": null,
+    "kwh": 0, "currency": "MXN", "total_cost": null, "total_cost_status": null,
     "created_at": "2026-10-01T15:30:02Z",
     "updated_at": "2026-10-01T15:30:02Z"
   }
@@ -329,30 +343,35 @@ HTTP 201
 | Error | HTTP |
 | --- | --- |
 | `MISSING_FIELD` | 422 |
-| `DUPLICATE_REFERENCE` (same `order_id`, different request) | 422 |
+| `DUPLICATE_REFERENCE` (same `reference`, different request) | 422 |
+| `NO_AGREEMENT` | 422 |
+| `NO_TARIFF` | 422 |
 | `LOCATION_NOT_FOUND` | 404 |
 | `CHARGE_POINT_NOT_FOUND` | 404 |
 | `CONNECTOR_NOT_FOUND` | 404 |
 | `CHARGE_POINT_OCCUPIED` | 409 |
+| `LOCATION_BLOCKED` | 409 |
 | `REQUEST_IN_PROGRESS` | 409 |
-| `TOKEN_ERROR` (driver could not be authorized at the operator) | 502 |
+| `TOKEN_ERROR` (driver could not be authorized at the charging partner) | 502 |
 | `SESSION_START_FAILED` | 502 |
 
 ### `GET /sessions/{id}`
 
-One session, live: energy so far, cost so far, status.
+One session, live: energy so far, cost so far, status. `total_cost_status` is `ESTIMATED` before the
+charger's final record, `FINAL` once it is confirmed, or `IN_REVIEW` while it is checked.
 
 ```json
 {
   "data": {
     "id": "ses_7Hq2Lx",
-    "order_id": "ORDER-20261001-000231",
+    "reference": "ORDER-20261001-000231",
     "status": "COMPLETED",
     "location_id": "LOC-CDMX-0142",
     "charge_point_id": "MX*EXA*E0142A",
     "connector_id": "1",
     "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
-    "kwh": 40.2, "currency": "MXN", "total_cost": 372.78,
+    "kwh": 40.2, "currency": "MXN",
+    "total_cost": 372.78, "total_cost_status": "FINAL",
     "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
     "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" },
     "created_at": "2026-10-01T15:30:02Z",
@@ -374,7 +393,6 @@ Your sessions.
 | --- | --- |
 | `status` | `PENDING`, `ACTIVE`, `COMPLETED`, `FAILED` |
 | `updated_since` | Only sessions changed since this time |
-| `order_id` | Look up a session by your order ID |
 | `limit`, `offset` | Paging |
 
 </details>
@@ -387,6 +405,7 @@ Stop charging. Returns `202` while the charger confirms.
 | --- | --- |
 | `SESSION_NOT_FOUND` | 404 |
 | `SESSION_NOT_ACTIVE` | 409 |
+| `SESSION_NOT_LINKED` (charger has not reported the session yet, retry shortly) | 409 |
 | `SESSION_STOP_FAILED` | 502 |
 
 ### `PUT /sessions/{id}/retail_total`
@@ -402,7 +421,7 @@ Wholesale partners only: the price you charged your driver.
 
 | Event | When |
 | --- | --- |
-| `session.started` · `session.updated` · `session.completed` · `session.failed` | Live session events. `session.updated` every few seconds with kWh and cost so far. |
+| `session.started` · `session.updated` · `session.completed` · `session.failed` | Live session events. `session.updated` whenever kWh or cost so far changes. |
 
 ```json
 {
@@ -410,11 +429,19 @@ Wholesale partners only: the price you charged your driver.
   "type": "session.completed",
   "created_at": "2026-10-01T16:12:44Z",
   "data": {
-    "id": "ses_7Hq2Lx", "order_id": "ORDER-20261001-000231",
-    "status": "COMPLETED", "kwh": 40.2,
-    "total_cost": 372.78, "currency": "MXN",
+    "id": "ses_7Hq2Lx",
+    "reference": "ORDER-20261001-000231",
+    "status": "COMPLETED",
+    "location_id": "LOC-CDMX-0142",
+    "charge_point_id": "MX*EXA*E0142A",
+    "connector_id": "1",
+    "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
+    "kwh": 40.2, "currency": "MXN",
+    "total_cost": 372.78, "total_cost_status": "FINAL",
     "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
-    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" }
+    "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" },
+    "created_at": "2026-10-01T15:30:02Z",
+    "updated_at": "2026-10-01T16:12:44Z"
   }
 }
 ```
@@ -452,7 +479,7 @@ Send or correct the driver's tax data.
 {
   "data": {
     "session_id": "ses_7Hq2Lx",
-    "order_id": "ORDER-20261001-000231",
+    "reference": "ORDER-20261001-000231",
     "tax_invoice": { "status": "REQUESTED" }
   }
 }
@@ -476,7 +503,7 @@ Returns the tax invoice PDF once issued.
 
 ### Event `tax_invoice.issued`
 
-Carries `order_id` and the tax invoice `url`.
+Carries `reference` and the tax invoice `url`.
 
 </details>
 
@@ -498,7 +525,7 @@ Report a refund, chargeback or wrong charge on a session.
   "data": {
     "id": "dsp_31Kc",
     "session_id": "ses_7Hq2Lx",
-    "order_id": "ORDER-20261001-000231",
+    "reference": "ORDER-20261001-000231",
     "type": "CHARGEBACK",
     "amount": 120.00,
     "currency": "MXN",
@@ -517,7 +544,7 @@ carries the outcome:
   "data": {
     "id": "dsp_31Kc",
     "session_id": "ses_7Hq2Lx",
-    "order_id": "ORDER-20261001-000231",
+    "reference": "ORDER-20261001-000231",
     "type": "CHARGEBACK",
     "amount": 120.00,
     "currency": "MXN",
@@ -531,11 +558,46 @@ Errors: `DISPUTE_NOT_FOUND` 404
 
 ### `GET /sessions/{id}/evidence`
 
-Returns the evidence PDF for a chargeback: session timeline, meter values, the operator's charge
+Returns the evidence PDF for a chargeback: session timeline, meter values, the charging partner's charge
 record and our checks.
 
 ### Event `dispute.updated`
 
-Carries `order_id`, `status` and `outcome`.
+Carries `reference`, `status` and `outcome`.
+
+</details>
+
+<details class="section" id="payments" markdown="1">
+<summary>Payments (optional)</summary>
+
+Tell us which sessions you collected from drivers, so we can match your payment to them. Needs a
+write key.
+
+### `POST /payments`
+
+| Body field | Meaning |
+| --- | --- |
+| `reference` **required** | Your own ID for this payment, up to 200 characters |
+| `paid_at` **required** | When you collected it, ISO 8601 |
+| `currency` **required** | ISO 4217, e.g. `MXN` |
+| `sessions` **required** | 1 to 100 items, each with `session_id` and `amount` |
+
+```json
+{
+  "reference": "PAY-2026-10-03-001",
+  "paid_at": "2026-10-03T09:00:00Z",
+  "currency": "MXN",
+  "sessions": [{ "session_id": "ses_7Hq2Lx", "amount": 372.78 }]
+}
+```
+
+Returns `201` with the stored payment and `received_at`. Sending the same `reference` and body again
+returns `200` with what was stored.
+
+| Error | HTTP |
+| --- | --- |
+| `INVALID_PARAMETER` | 422 |
+| `INVALID_SESSIONS` (a session is unknown or in another currency; nothing is stored) | 422 |
+| `REFERENCE_REUSED` (same `reference`, different body) | 409 |
 
 </details>

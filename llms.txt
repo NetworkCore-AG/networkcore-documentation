@@ -5,7 +5,7 @@
 ## How to connect
 
 - **CPO**: NetworkCore is the eMSP. Base URL `https://ocpi.networkcore.org`. A three-token credentials handshake (Token A from the CPO, Token B from NetworkCore, Token C from the CPO), then standard OCPI modules: credentials, locations, tariffs, tokens, commands, sessions, cdrs. Header: `Authorization: Token <base64>`.
-- **DP**: JSON over HTTPS. Base URL `https://dp.networkcore.org`. Header: `Authorization: Bearer <api_key>`. Two levels: Data (locations, availability, tariffs, quotes) and Full charging (start and stop sessions, webhooks, receipts and tax invoices, disputes). Sessions run PENDING, ACTIVE, COMPLETED or FAILED. Requests are idempotent by `order_id`. Webhooks are signed per Standard Webhooks.
+- **DP**: JSON over HTTPS. Base URL `https://dp.networkcore.org`. Header: `Authorization: Bearer <api_key>`. Two levels: Data (locations, availability, tariffs, quotes) and Full charging (start and stop sessions, webhooks, receipts and tax invoices, disputes). Sessions run PENDING, ACTIVE, COMPLETED or FAILED. Requests are idempotent by `reference`. Webhooks are signed per Standard Webhooks.
 
 ## Docs
 

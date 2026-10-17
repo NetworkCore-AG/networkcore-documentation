@@ -5,7 +5,7 @@ Test your integration before going live. Simulated stations, no real energy, no 
 | | Sandbox | Production |
 |---|---|---|
 | Base URL | `[SANDBOX_URL]` | `[PRODUCTION_URL]` |
-| Keys | Sandbox keys | Production keys |
+| Keys | `nc_test_` keys | `nc_live_` keys |
 
 Sandbox and production keys are separate. Ask your NetworkCore contact for yours.
 Sandbox data can be reset at any time.
@@ -14,20 +14,23 @@ Sandbox data can be reset at any time.
 
 ## Distribution Partners
 
-Use these test charge points at location `NC-SANDBOX`. Each one behaves the same way every time.
+Each test charge point is its own location, `NC-` plus its name, for example `NC-SBX-OK`. Each one behaves the same way every time.
 
 | Charge point | What happens | What you get |
 |---|---|---|
-| `SBX-OK` | Normal charge. 10 kWh in about 2 minutes, stops when you call stop. | `PENDING` → `ACTIVE` → `COMPLETED` with `kwh` and `total_cost` |
+| `SBX-OK` | Normal charge. About 40 kWh in 30 minutes, stops when you call stop. | `PENDING` → `ACTIVE` → `COMPLETED` with `kwh` and `total_cost` |
 | `SBX-REJECT` | Station refuses to start. | `201 PENDING`, then `FAILED` |
 | `SBX-BUSY` | Connector already in use. | `409 CHARGE_POINT_OCCUPIED` |
-| `SBX-TOKEN` | Driver can't be authorized at the operator. | `502 TOKEN_ERROR` |
+| `SBX-TOKEN` | Driver can't be authorized at the charging partner. | `502 TOKEN_ERROR` |
 | `SBX-DROP` | Driver unplugs after 1 minute. | `ACTIVE` → `COMPLETED` without a stop call |
-| `SBX-LATE` | Final cost arrives 10 minutes after the session ends. | `COMPLETED` with `total_cost: null`, filled in later |
-| `SBX-NOTARIFF` | No tariff available at start. | Session starts with `tariff_lock_failed: true` |
+| `SBX-LATE` | Final cost arrives 10 minutes after the session ends. | `COMPLETED` with `total_cost_status: ESTIMATED`, then `FINAL` |
+| `SBX-HOLD` | Final cost is held for review. | `COMPLETED` with `total_cost: null` and `total_cost_status: IN_REVIEW` |
+| `SBX-NOTARIFF` | No tariff available at start. | `422 NO_TARIFF` |
+| `SBX-MX` | Normal charge in Mexico City, priced in MXN. | Same as `SBX-OK` |
 
 **Also test on any charge point**
 
+- Sandbox sessions are simulated: there are no webhooks, so read them with `GET /sessions/{id}`.
 - Send the same start request twice. The second one returns the original response with `Idempotent-Replayed: true`.
 - Reuse a reference with a different charge point. You get `422 DUPLICATE_REFERENCE`.
 
