@@ -132,7 +132,7 @@ sequenceDiagram
 
 ## NetworkCore OCPI endpoints
 
-Base URL: `https://ocpi.networkcore.org`. Interactive reference: `https://ocpi.networkcore.org/docs`.
+Base URL: `https://ocpi.networkcore.org`. Interactive reference: [ocpi.networkcore.org/docs](https://ocpi.networkcore.org/docs).
 
 | Method | Path | Purpose |
 | --- | --- | --- |
