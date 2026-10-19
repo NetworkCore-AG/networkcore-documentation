@@ -7,11 +7,12 @@
 <meta name="description" content="{{ site.description }}">
 <style>
 :root { --bg: #fff; --fg: #16202c; --muted: #5b6878; --line: #dde2e9; --code: #f2f4f8; --accent: #1d5bd6; color-scheme: light dark; }
-@media (prefers-color-scheme: dark) { :root { --bg: #0f141b; --fg: #e6ebf2; --muted: #93a0b2; --line: #2a3442; --code: #1c2531; --accent: #7aa7ff; } .brand img { filter: brightness(0) invert(1); } }
+@media (prefers-color-scheme: dark) { :root { --bg: #0f141b; --fg: #e6ebf2; --muted: #93a0b2; --line: #2a3442; --code: #1c2531; --accent: #7aa7ff; } }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
 header { max-width: 820px; margin: 0 auto; padding: 20px 16px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; }
 .brand { display: flex; line-height: 0; }
 .brand img { height: 22px; width: auto; filter: brightness(0); }
+@media (prefers-color-scheme: dark) { .brand img { filter: brightness(0) invert(1); } }
 nav { font-size: 0.9rem; display: flex; flex-wrap: wrap; gap: 6px 20px; }
 nav a { text-decoration: none; }
 nav a[aria-current] { color: var(--fg); font-weight: 600; }
