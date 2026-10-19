@@ -1,7 +1,7 @@
 # DP API reference
 
 One API for distribution partners such as mobility apps, fleets and car makers: find chargers,
-show live availability and prices, start and stop charging, follow every session live.
+show current availability and prices, start and stop charging, follow every session live.
 
 > Test first in the [Sandbox](/sandbox.html). Simulated stations, no real money.
 
@@ -13,7 +13,7 @@ show live availability and prices, start and stop charging, follow every session
 
 ## Integration levels
 
-- **Data**: locations, live availability and prices. No money moves and no sessions start. Fits
+- **Data**: locations, current availability and prices. No money moves and no sessions start. Fits
   maps, POI display and route planners.
 - **Full charging**: everything in Data, plus starting and stopping sessions and live session
   events.
@@ -43,6 +43,23 @@ partner, and comes back on every session, webhook, tax invoice and dispute. Send
 ### Charging partner
 
 The company that runs the chargers. Locations show it as `charging_partner`.
+
+### Charge point status
+
+Every charge point has one of these statuses, passed on as the charging partner reports it. It can
+lag by up to about 30 seconds.
+
+| Status | Meaning |
+| --- | --- |
+| `AVAILABLE` | Free to start a charge |
+| `CHARGING` | A charge is running |
+| `BLOCKED` | Occupied without charging, for example a parked vehicle |
+| `RESERVED` | Reserved for a driver |
+| `INOPERATIVE` | Not working at the moment |
+| `OUTOFORDER` | Out of order |
+| `PLANNED` | Planned for the future |
+| `UNKNOWN` | Status not known |
+| `REMOVED` | Removed by the charging partner. Never returned: the charge point no longer appears. |
 
 ### Errors
 
@@ -147,7 +164,7 @@ PENDING → ACTIVE → COMPLETED
 
 ### `GET /locations`
 
-Chargers near a point or inside a map area, with live status.
+Chargers near a point or inside a map area, with current status.
 
 <details markdown="1">
 <summary>Optional parameters</summary>
@@ -159,7 +176,7 @@ Chargers near a point or inside a map area, with live status.
 | `country` | ISO code, e.g. `MX` |
 | `min_power_kw` | e.g. `50` for fast charging |
 | `connector` | `CCS2`, `TYPE2`, `CHADEMO`, `GBT`… |
-| `available_only` | `true` to hide busy or broken chargers |
+| `available_only` | `true` to match only `AVAILABLE` charge points |
 | `updated_since` | Only locations changed since this time |
 | `limit`, `offset` | Paging |
 
@@ -194,7 +211,8 @@ Errors: `LOCATION_NOT_FOUND`
 
 ### `GET /availability`
 
-Light status feed for keeping a map fresh without re-downloading locations.
+Light status feed for keeping a map fresh without re-downloading locations. `status` uses the
+same values as [Charge point status](#charge-point-status).
 
 | Query | Meaning |
 | --- | --- |
@@ -293,7 +311,7 @@ What a charge will cost your driver at this connector, with your agreement appli
 
 | Event | When |
 | --- | --- |
-| `evse.status_changed` | A charge point became available, busy or out of order. Same item as `GET /availability`. |
+| `evse.status_changed` | A charge point's status changed. Same item as `GET /availability`. |
 | `location.updated` | A location was added, changed or removed. Carries `location_id`; read `GET /locations/{id}`. |
 | `tariff.updated` | A CPO changed a price. Carries `tariff_id`; read `GET /tariffs/{id}`. |
 
