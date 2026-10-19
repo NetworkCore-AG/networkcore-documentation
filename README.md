@@ -16,10 +16,11 @@ REST API to find chargers, start charging and follow every session live.
 
 | Service | Base URL |
 | --- | --- |
-| OCPI (for CPOs) | `https://ocpi.networkcore.org` |
-| DP API (for partners) | `https://dp.networkcore.org` |
+| OCPI (for Charging Partners) | `https://ocpi.networkcore.org` |
+| DP API (for Distribution Partners) | `https://dp.networkcore.org` |
 
 ## Contact
 
-Questions about onboarding or an integration: contact your NetworkCore representative. When you
-report a problem, include the `X-Correlation-ID` from the response.
+Questions about onboarding or an integration: contact your NetworkCore representative or use the
+[contact form](https://www.networkcore.org/#contact). When you report a problem, include the
+`X-Correlation-ID` from the response.
