@@ -194,6 +194,7 @@ Chargers near a point or inside a map area, with current status.
     "charge_points": [{
       "id": "MX*EXA*E0142A",
       "status": "AVAILABLE",
+      "payment_url": "https://vira.direct/c/MX*EXA*E0142A?a=ECOMOVEMENT",
       "connectors": [{ "id": "1", "standard": "CCS2", "power_kw": 120, "tariff_id": "EXA-DC-PUB" }]
     }],
     "last_updated": "2026-10-01T15:04:11Z"
@@ -201,6 +202,9 @@ Chargers near a point or inside a map area, with current status.
   "total_count": 1, "limit": 50, "offset": 0
 }
 ```
+
+`payment_url` is a link where a driver can pay for and start a charging session at this charge
+point, or `null` when payment is not available for it.
 
 ### `GET /locations/{id}`
 
