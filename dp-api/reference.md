@@ -194,7 +194,7 @@ Chargers near a point or inside a map area, with current status.
     "charge_points": [{
       "id": "MX*EXA*E0142A",
       "status": "AVAILABLE",
-      "payment_url": "https://domain.tld?a=b",
+      "payment_url": "https://pay.example.com/c/LOC-CDMX-0142/MX*EXA*E0142A",
       "connectors": [{ "id": "1", "standard": "CCS2", "power_kw": 120, "tariff_id": "EXA-DC-PUB" }]
     }],
     "last_updated": "2026-10-01T15:04:11Z"
@@ -204,7 +204,8 @@ Chargers near a point or inside a map area, with current status.
 ```
 
 `payment_url` is a link where a driver can pay for and start a charging session at this charge
-point, or `null` when payment is not available for it.
+point, or `null` when payment is not available for it. Use the URL as published; do not build or
+rewrite it.
 
 ### `GET /locations/{id}`
 
@@ -289,7 +290,7 @@ What a charge will cost your driver at this connector, with your agreement appli
 | Body field | Meaning |
 | --- | --- |
 | `location_id` **required** | |
-| `charge_point_id` **required** | |
+| `charge_point_id` **required** | The charge point's `id` as returned by `GET /locations` |
 | `connector_id` **required** | |
 | `estimate.kwh` | Expected energy, e.g. `40`. Needed when the price is per kWh. |
 | `estimate.minutes` | Expected duration. Needed for time-based prices. |
@@ -331,7 +332,7 @@ Start charging. We send the start command to the charger.
 | --- | --- |
 | `reference` **required** | Your order ID. Unique per partner. Same reference = same answer. |
 | `location_id` **required** | |
-| `charge_point_id` **required** | OCPI EVSE uid |
+| `charge_point_id` **required** | The charge point's `id` as returned by `GET /locations` |
 | `connector_id` **required** | |
 | `driver_ref` **required** | Your stable ID for the driver |
 
