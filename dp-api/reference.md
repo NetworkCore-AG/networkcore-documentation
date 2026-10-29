@@ -191,6 +191,7 @@ Chargers near a point or inside a map area, with current status.
     "address": "Av. Ejemplo 100, Ciudad de México",
     "coordinates": { "lat": 19.4402, "lng": -99.2038 },
     "country": "MX", "time_zone": "America/Mexico_City",
+    "payment_url": "https://pay.example.com/c/LOC-CDMX-0142",
     "charge_points": [{
       "id": "MX*EXA*E0142A",
       "status": "AVAILABLE",
@@ -203,9 +204,9 @@ Chargers near a point or inside a map area, with current status.
 }
 ```
 
-`payment_url` is a link where a driver can pay for and start a charging session at this charge
-point, or `null` when payment is not available for it. Use the URL as published; do not build or
-rewrite it.
+`payment_url` is on the location and on each charge point. It is a link where a driver can pay for
+and start a charging session there, or `null` when payment is not available for it. Use the URL as
+published; do not build or rewrite it.
 
 ### `GET /locations/{id}`
 
