@@ -343,6 +343,7 @@ Start charging. We send the start command to the charger.
 | Body field | Meaning |
 | --- | --- |
 | `billing_details` | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details). |
+| `affiliate_code` | The code of the partner whose payment link brought the driver: the `a` value in the link's `payment_url`. The session is attributed to that partner. An unknown code never blocks the start. |
 
 </details>
 
@@ -368,6 +369,7 @@ HTTP 201
 | --- | --- |
 | `MISSING_FIELD` | 422 |
 | `DUPLICATE_REFERENCE` (same `reference`, different request) | 422 |
+| `INVALID_PARAMETER` (`affiliate_code` is not a string) | 422 |
 | `NO_AGREEMENT` | 422 |
 | `NO_TARIFF` | 422 |
 | `LOCATION_NOT_FOUND` | 404 |
