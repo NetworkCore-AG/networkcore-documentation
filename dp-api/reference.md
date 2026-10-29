@@ -191,7 +191,7 @@ Chargers near a point or inside a map area, with current status.
     "address": "Av. Ejemplo 100, Ciudad de México",
     "coordinates": { "lat": 19.4402, "lng": -99.2038 },
     "country": "MX", "time_zone": "America/Mexico_City",
-    "payment_url": "https://pay.example.com/c/LOC-CDMX-0142",
+    "payment_url": "https://pay.example.com/l/LOC-CDMX-0142",
     "charge_points": [{
       "id": "MX*EXA*E0142A",
       "status": "AVAILABLE",
@@ -343,7 +343,7 @@ Start charging. We send the start command to the charger.
 | Body field | Meaning |
 | --- | --- |
 | `billing_details` | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details). |
-| `affiliate_code` | The code of the partner whose payment link brought the driver: the `a` value in the link's `payment_url`. The session is attributed to that partner. An unknown code never blocks the start. |
+| `affiliate_code` | The code of the partner whose payment link brought the driver: the `a` value in the link's `payment_url`, for example `?a=EXAMPLE`. The session is attributed to that partner. An unknown code never blocks the start. |
 
 </details>
 
