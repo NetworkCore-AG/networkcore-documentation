@@ -350,7 +350,7 @@ Start charging. We send the start command to the charger.
 
 | Body field | Meaning |
 | --- | --- |
-| `billing_details` (coming soon) | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details-coming-soon). |
+| `billing_details` (coming soon) | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbillingdetails-coming-soon). |
 
 </details>
 
