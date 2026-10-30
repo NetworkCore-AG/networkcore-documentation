@@ -28,8 +28,8 @@ A read API key gives Data, a write key gives Full charging. Keys start with `nc_
 | [Data webhooks](#data-webhooks) | ✓ | ✓ |
 | [Sessions](#sessions) | | ✓ |
 | [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
-| [Receipts and tax invoices](#receipts-and-tax-invoices) | | ✓ |
-| [Disputes](#disputes) | | ✓ |
+| [Receipts and tax invoices](#receipts-and-tax-invoices) (coming soon) | | ✓ |
+| [Disputes](#disputes) (coming soon) | | ✓ |
 | [Payments (optional)](#payments) | | ✓ |
 
 ## Conventions
@@ -114,6 +114,8 @@ body as `GET /sessions/{id}`:
 }
 ```
 
+`receipt_url` and `tax_invoice` (coming soon)
+
 **Verifying signatures.** We follow the Standard Webhooks spec.
 Each request carries three headers: `webhook-id`, `webhook-timestamp` and `webhook-signature`. The
 signature is an HMAC-SHA256 of `{webhook-id}.{webhook-timestamp}.{raw body}` using your secret,
@@ -194,6 +196,8 @@ Chargers near a point or inside a map area, with current status.
     "payment_url": "https://pay.example.com/l/LOC-CDMX-0142",
     "charge_points": [{
       "id": "MX*EXA*E0142A",
+      "evse_id": "MX*EXA*E0142*1",
+      "physical_reference": "A1",
       "status": "AVAILABLE",
       "payment_url": "https://pay.example.com/c/LOC-CDMX-0142/MX*EXA*E0142A",
       "connectors": [{ "id": "1", "standard": "CCS2", "power_kw": 120, "tariff_id": "EXA-DC-PUB" }]
@@ -207,6 +211,10 @@ Chargers near a point or inside a map area, with current status.
 `payment_url` is on the location and on each charge point. It is a link where a driver can pay for
 and start a charging session there, or `null` when payment is not available for it. Use the URL as
 published; do not build or rewrite it.
+
+`evse_id` is the charging partner's own ID for the charge point, for display. `physical_reference`
+is the number or label printed on the charge point. Both are `null` when the charging partner does
+not send them. Use `id` to refer to a charge point.
 
 ### `GET /locations/{id}`
 
@@ -342,8 +350,7 @@ Start charging. We send the start command to the charger.
 
 | Body field | Meaning |
 | --- | --- |
-| `billing_details` | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details). |
-| `affiliate_code` | The code of the partner whose payment link brought the driver: the `a` value in the link's `payment_url`, for example `?a=EXAMPLE`. The session is attributed to that partner. An unknown code never blocks the start. |
+| `billing_details` (coming soon) | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbilling_details-coming-soon). |
 
 </details>
 
@@ -369,7 +376,6 @@ HTTP 201
 | --- | --- |
 | `MISSING_FIELD` | 422 |
 | `DUPLICATE_REFERENCE` (same `reference`, different request) | 422 |
-| `INVALID_PARAMETER` (`affiliate_code` is not a string) | 422 |
 | `NO_AGREEMENT` | 422 |
 | `NO_TARIFF` | 422 |
 | `LOCATION_NOT_FOUND` | 404 |
@@ -406,6 +412,8 @@ charger's final record, `FINAL` once it is confirmed, or `IN_REVIEW` while it is
 }
 ```
 
+`receipt_url` and `tax_invoice` (coming soon)
+
 Errors: `SESSION_NOT_FOUND` 404
 
 ### `GET /sessions`
@@ -434,7 +442,7 @@ Stop charging. Returns `202` while the charger confirms.
 | `SESSION_NOT_LINKED` (charger has not reported the session yet, retry shortly) | 409 |
 | `SESSION_STOP_FAILED` | 502 |
 
-### `PUT /sessions/{id}/retail_total`
+### `PUT /sessions/{id}/retail_total` (coming soon)
 
 Wholesale partners only: the price you charged your driver.
 
@@ -472,22 +480,24 @@ Wholesale partners only: the price you charged your driver.
 }
 ```
 
-### `GET /events`
+`receipt_url` and `tax_invoice` (coming soon)
+
+### `GET /events` (coming soon)
 
 Optional server-sent events stream with the same events, for live in-app screens.
 
 <details class="section" id="receipts-and-tax-invoices" markdown="1">
-<summary>Receipts and tax invoices</summary>
+<summary>Receipts and tax invoices (coming soon)</summary>
 
 Every public price session gets a receipt automatically. The tax invoice is issued automatically
 once you send the driver's billing details, at session start or afterwards. For wholesale sessions
 you are the seller, so you issue your own.
 
-### `GET /sessions/{id}/receipt`
+### `GET /sessions/{id}/receipt` (coming soon)
 
 Returns the receipt PDF.
 
-### `PUT /sessions/{id}/billing_details`
+### `PUT /sessions/{id}/billing_details` (coming soon)
 
 Send or correct the driver's tax data.
 
@@ -518,7 +528,7 @@ Send or correct the driver's tax data.
 | `TAX_INVOICE_ALREADY_ISSUED` | 409 |
 | `SESSION_NOT_FOUND` | 404 |
 
-### `GET /sessions/{id}/tax_invoice`
+### `GET /sessions/{id}/tax_invoice` (coming soon)
 
 Returns the tax invoice PDF once issued.
 
@@ -527,16 +537,16 @@ Returns the tax invoice PDF once issued.
 | `TAX_INVOICE_NOT_READY` | 409 |
 | `SESSION_NOT_FOUND` | 404 |
 
-### Event `tax_invoice.issued`
+### Event `tax_invoice.issued` (coming soon)
 
 Carries `reference` and the tax invoice `url`.
 
 </details>
 
 <details class="section" id="disputes" markdown="1">
-<summary>Disputes</summary>
+<summary>Disputes (coming soon)</summary>
 
-### `POST /sessions/{id}/disputes`
+### `POST /sessions/{id}/disputes` (coming soon)
 
 Report a refund, chargeback or wrong charge on a session.
 
@@ -560,7 +570,7 @@ Report a refund, chargeback or wrong charge on a session.
 }
 ```
 
-### `GET /disputes/{id}`
+### `GET /disputes/{id}` (coming soon)
 
 One dispute. `status` is `UNDER_REVIEW`, `ACCEPTED` or `REJECTED`. Once decided, the response
 carries the outcome:
@@ -582,12 +592,12 @@ carries the outcome:
 
 Errors: `DISPUTE_NOT_FOUND` 404
 
-### `GET /sessions/{id}/evidence`
+### `GET /sessions/{id}/evidence` (coming soon)
 
 Returns the evidence PDF for a chargeback: session timeline, meter values, the charging partner's charge
 record and our checks.
 
-### Event `dispute.updated`
+### Event `dispute.updated` (coming soon)
 
 Carries `reference`, `status` and `outcome`.
 
