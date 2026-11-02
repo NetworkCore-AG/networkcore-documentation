@@ -28,9 +28,9 @@ A read API key gives Data, a write key gives Full charging. Keys start with `nc_
 | [Data webhooks](#data-webhooks) | ✓ | ✓ |
 | [Sessions](#sessions) | | ✓ |
 | [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
-| [Receipts and tax invoices](#receipts-and-tax-invoices) (coming soon) | | ✓ |
-| [Disputes](#disputes) (coming soon) | | ✓ |
-| [Station feedback](#station-feedback) (coming soon) | | ✓ |
+| [Receipts and tax invoices](#receipts-and-tax-invoices) (optional) | | ✓ |
+| [Disputes](#disputes) (optional) | | ✓ |
+| [Station feedback](#station-feedback) (optional) | | ✓ |
 | [Payments (optional)](#payments) | | ✓ |
 
 ## Conventions
@@ -488,7 +488,7 @@ Wholesale partners only: the price you charged your driver.
 Optional server-sent events stream with the same events, for live in-app screens.
 
 <details class="section" id="receipts-and-tax-invoices" markdown="1">
-<summary>Receipts and tax invoices (coming soon)</summary>
+<summary>Receipts and tax invoices (optional, coming soon)</summary>
 
 Every public price session gets a receipt automatically. The tax invoice is issued automatically
 once you send the driver's billing details, at session start or afterwards. For wholesale sessions
@@ -545,7 +545,7 @@ Carries `reference` and the tax invoice `url`.
 </details>
 
 <details class="section" id="disputes" markdown="1">
-<summary>Disputes (coming soon)</summary>
+<summary>Disputes (optional, coming soon)</summary>
 
 ### `POST /sessions/{id}/disputes` (coming soon)
 
@@ -605,11 +605,9 @@ Carries `reference`, `status` and `outcome`.
 </details>
 
 <details class="section" id="station-feedback" markdown="1">
-<summary>Station feedback (coming soon)</summary>
+<summary>Station feedback (optional, coming soon)</summary>
 
-Let drivers rate a station and report a problem. NetworkCore adds the feedback up per charge point and
-shares it with the charging partner, showing which partner it came from and the driver's account
-number (`driver_ref`).
+Let drivers rate a station and report a problem.
 
 ### `GET /feedback/form` (coming soon)
 
@@ -649,7 +647,7 @@ Send a driver's rating of a charge point, after a session or at any time. Needs 
 | --- | --- |
 | `location_id` **required** | |
 | `charge_point_id` **required** | The charge point's `id` as returned by `GET /locations` |
-| `driver_ref` **required** | Your stable ID for the driver. Shared with the charging partner. |
+| `driver_ref` **required** | Your stable ID for the driver |
 | `rating` **required** | A whole number from 1 to 5 |
 | `problems` | Codes from the form, for example `["LIGHTING"]` |
 | `comment` | Free text, up to 500 characters |
