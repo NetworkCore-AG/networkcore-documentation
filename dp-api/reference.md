@@ -31,7 +31,7 @@ A read API key gives Data, a write key gives Full charging. Keys start with `nc_
 | [Receipts and tax invoices](#receipts-and-tax-invoices) (optional) | | ✓ |
 | [Disputes](#disputes) (optional) | | ✓ |
 | [Station feedback](#station-feedback) (optional) | | ✓ |
-| [Payments (optional)](#payments) | | ✓ |
+| [Payments](#payments) (optional) | | ✓ |
 
 ## Conventions
 
