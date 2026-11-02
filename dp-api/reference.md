@@ -72,7 +72,8 @@ One shape everywhere:
 ```
 
 A missing or invalid key returns `401 UNAUTHORIZED`. A read key on a write endpoint returns
-`403 FORBIDDEN`.
+`403 FORBIDDEN`. A blocked partner gets `403 DP_BLOCKED` everywhere except reading and stopping its
+sessions and `POST /payments`.
 
 ### Headers
 
@@ -322,6 +323,18 @@ What a charge will cost your driver at this connector, with your agreement appli
 
 `pricing_mode` is `PUBLIC`, `PUBLIC_DISCOUNT`, `PUBLIC_FIX` or `WHOLESALE`.
 
+| Error | HTTP |
+| --- | --- |
+| `MISSING_FIELD` (a body field, or the `estimate` the price needs) | 422 |
+| `INVALID_PARAMETER` | 422 |
+| `NO_AGREEMENT` | 422 |
+| `NO_TARIFF` | 422 |
+| `LOCATION_NOT_FOUND` | 404 |
+| `CHARGE_POINT_NOT_FOUND` | 404 |
+| `CONNECTOR_NOT_FOUND` | 404 |
+| `AMBIGUOUS_LOCATION` (`location_id` belongs to more than one charging partner) | 409 |
+| `LOCATION_BLOCKED` | 409 |
+
 ## Data webhooks
 
 | Event | When |
@@ -383,10 +396,12 @@ HTTP 201
 | `CHARGE_POINT_NOT_FOUND` | 404 |
 | `CONNECTOR_NOT_FOUND` | 404 |
 | `CHARGE_POINT_OCCUPIED` | 409 |
+| `AMBIGUOUS_LOCATION` (`location_id` belongs to more than one charging partner) | 409 |
 | `LOCATION_BLOCKED` | 409 |
 | `REQUEST_IN_PROGRESS` | 409 |
 | `TOKEN_ERROR` (driver could not be authorized at the charging partner) | 502 |
 | `SESSION_START_FAILED` | 502 |
+| `BLOCKS_UNAVAILABLE` (could not check whether the charge point is blocked, retry shortly) | 503 |
 
 ### `GET /sessions/{id}`
 
