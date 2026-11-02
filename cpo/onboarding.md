@@ -130,6 +130,12 @@ sequenceDiagram
 - **Price CDRs with the published tariff.** NetworkCore checks every CDR against the tariff in
   force when the session started and holds CDRs that drift from it.
 
+## Driver feedback (coming soon)
+
+Drivers can rate your charge points and report problems such as security, speed or lighting through
+our partners. NetworkCore adds the feedback up per charge point and shares it with you, showing which
+partner it came from and the driver's account number.
+
 ## NetworkCore OCPI endpoints
 
 Base URL: `https://ocpi.networkcore.org`. Interactive reference: [ocpi.networkcore.org/docs](https://ocpi.networkcore.org/docs).
