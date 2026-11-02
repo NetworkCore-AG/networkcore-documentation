@@ -30,6 +30,7 @@ A read API key gives Data, a write key gives Full charging. Keys start with `nc_
 | [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
 | [Receipts and tax invoices](#receipts-and-tax-invoices) (coming soon) | | ✓ |
 | [Disputes](#disputes) (coming soon) | | ✓ |
+| [Station feedback](#station-feedback) (coming soon) | | ✓ |
 | [Payments (optional)](#payments) | | ✓ |
 
 ## Conventions
@@ -600,6 +601,82 @@ record and our checks.
 ### Event `dispute.updated` (coming soon)
 
 Carries `reference`, `status` and `outcome`.
+
+</details>
+
+<details class="section" id="station-feedback" markdown="1">
+<summary>Station feedback (coming soon)</summary>
+
+Let drivers rate a station and report a problem. NetworkCore adds the feedback up per charge point and
+shares it with the charging partner, showing which partner it came from and the driver's account
+number (`driver_ref`).
+
+### `GET /feedback/form` (coming soon)
+
+The form to show the driver: a rating, the possible problems and the messages. Show it as given.
+
+| Query | Meaning |
+| --- | --- |
+| `language` | `en` or `es`. Default `en`. |
+
+```json
+{
+  "data": {
+    "title": "How was this station?",
+    "rating": { "min": 1, "max": 5 },
+    "problems_prompt": "Any problem with this station?",
+    "problems": [
+      { "code": "SECURITY", "label": "Security" },
+      { "code": "SPEED", "label": "Charging speed" },
+      { "code": "LIGHTING", "label": "Lighting" },
+      { "code": "CLEANLINESS", "label": "Cleanliness" },
+      { "code": "CONNECTOR", "label": "Damaged cable or connector" },
+      { "code": "NOT_WORKING", "label": "Charger not working" },
+      { "code": "ACCESS", "label": "Hard to reach or blocked" },
+      { "code": "OTHER", "label": "Something else" }
+    ],
+    "comment_prompt": "Tell us more (optional)",
+    "thank_you": "Thanks, your feedback helps drivers and station owners."
+  }
+}
+```
+
+### `POST /feedback` (coming soon)
+
+Send a driver's rating of a charge point, after a session or at any time. Needs a write key.
+
+| Body field | Meaning |
+| --- | --- |
+| `location_id` **required** | |
+| `charge_point_id` **required** | The charge point's `id` as returned by `GET /locations` |
+| `driver_ref` **required** | Your stable ID for the driver. Shared with the charging partner. |
+| `rating` **required** | A whole number from 1 to 5 |
+| `problems` | Codes from the form, for example `["LIGHTING"]` |
+| `comment` | Free text, up to 500 characters |
+| `session_id` | The session this rating follows, for a rating after charging |
+
+```json
+{
+  "data": {
+    "id": "fbk_9Tm4Qa",
+    "location_id": "LOC-CDMX-0142",
+    "charge_point_id": "MX*EXA*E0142A",
+    "rating": 4,
+    "problems": ["LIGHTING"],
+    "created_at": "2026-10-01T16:20:05Z"
+  }
+}
+```
+
+Returns `201`.
+
+| Error | HTTP |
+| --- | --- |
+| `MISSING_FIELD` | 422 |
+| `INVALID_PARAMETER` (rating out of range or unknown problem code) | 422 |
+| `LOCATION_NOT_FOUND` | 404 |
+| `CHARGE_POINT_NOT_FOUND` | 404 |
+| `SESSION_NOT_FOUND` | 404 |
 
 </details>
 
