@@ -79,6 +79,7 @@ or generates one if you did not send it.
 - **Locations** are pulled from your `locations` endpoint. To keep status live, push changes with
   `PUT` or `PATCH` on `/2.2.1/locations/{country_code}/{party_id}/{location_id}`, adding
   `/{evse_uid}` and `/{connector_id}` for a single charge point or connector.
+- **Status changes, including plug-in.** Push every charge point status change within 10 seconds. When a vehicle is plugged in before a session is authorized, report `BLOCKED` (or `CHARGING`), not `AVAILABLE`. NetworkCore uses this to start charging for drivers who plug in and tap Start.
 - **Tariffs** are pulled from your `tariffs` endpoint every hour. To publish a change sooner, push
   it to NetworkCore with `PUT /2.2.1/tariffs/{country_code}/{party_id}/{tariff_id}`.
 
@@ -120,6 +121,7 @@ sequenceDiagram
 
 ### Requirements
 
+- **Push status within 10 seconds**, including plug-in before authorization. See Step 4.
 - **Return `authorization_reference`** unchanged on every session and CDR. NetworkCore uses it to
   match your records to the charge that was started.
 - **Send command results within 10 minutes.** After that, the command counts as timed out.
