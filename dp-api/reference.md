@@ -519,6 +519,7 @@ Wholesale partners only: the price you charged your driver.
     "status": "COMPLETED",
     "location_id": "LOC-CDMX-0142",
     "charge_point_id": "MX*EXA*E0142A",
+    "physical_reference": "A1",
     "connector_id": "1",
     "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
     "kwh": 40.2, "currency": "MXN",
