@@ -53,14 +53,16 @@ lag by up to about 30 seconds.
 | Status | Meaning |
 | --- | --- |
 | `AVAILABLE` | Free to start a charge |
-| `CHARGING` | A charge is running |
-| `BLOCKED` | Occupied without charging, for example a parked vehicle |
+| `CHARGING` | A charge is running, or a vehicle was just plugged in (depends on the charging partner) |
+| `BLOCKED` | Occupied without charging, for example a parked or just-plugged vehicle |
 | `RESERVED` | Reserved for a driver |
 | `INOPERATIVE` | Not working at the moment |
 | `OUTOFORDER` | Out of order |
 | `PLANNED` | Planned for the future |
 | `UNKNOWN` | Status not known |
 | `REMOVED` | Removed by the charging partner. Never returned: the charge point no longer appears. |
+
+A vehicle that was just plugged in shows as `BLOCKED` or `CHARGING` before its session starts, depending on the charging partner.
 
 ### Errors
 
@@ -104,6 +106,7 @@ body as `GET /sessions/{id}`:
     "status": "COMPLETED",
     "location_id": "LOC-CDMX-0142",
     "charge_point_id": "MX*EXA*E0142A",
+    "physical_reference": "A1",
     "connector_id": "1",
     "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
     "kwh": 40.2, "currency": "MXN",
@@ -349,15 +352,15 @@ What a charge will cost your driver at this connector, with your agreement appli
 
 ### `POST /sessions`
 
-Start charging. We send the start command to the charger.
+Start charging. We send the start command to the charger. Send the charge point the driver chose, or let us detect it: see [Plug in, tap Start](#plug-in-tap-start-coming-soon).
 
 | Body field | Meaning |
 | --- | --- |
 | `reference` **required** | Your order ID. Unique per partner. Same reference = same answer. |
 | `location_id` **required** | |
-| `charge_point_id` **required** | The charge point's `id` as returned by `GET /locations` |
-| `connector_id` **required** | |
-| `driver_ref` **required** | Your stable ID for the driver |
+| `charge_point_id` **required, unless detected** | The charge point's `id` as returned by `GET /locations`. Leave out to let us detect it (coming soon). |
+| `connector_id` **required, unless detected** | |
+| `driver_ref` **required** | The person or account paying. Keep it stable across sessions and cars. |
 
 <details markdown="1">
 <summary>Optional fields</summary>
@@ -365,6 +368,8 @@ Start charging. We send the start command to the charger.
 | Body field | Meaning |
 | --- | --- |
 | `billing_details` (coming soon) | Send the driver's tax data and the tax invoice is issued automatically when the session completes. Same fields as [`PUT /sessions/{id}/billing_details`](#put-sessionsidbillingdetails-coming-soon). |
+| `plugged_at` (coming soon) | When the car was plugged in, ISO 8601, as the car reports it. Recommended when you leave out `charge_point_id`. |
+| `connector` (coming soon) | The car's connector, same values as `GET /locations` (`CCS2`, `TYPE2`, `CHADEMO`, `GBT`…). Used only when we detect the charge point. |
 
 </details>
 
@@ -377,6 +382,7 @@ HTTP 201
     "status": "PENDING",
     "location_id": "LOC-CDMX-0142",
     "charge_point_id": "MX*EXA*E0142A",
+    "physical_reference": "A1",
     "connector_id": "1",
     "start_time": null, "end_time": null,
     "kwh": 0, "currency": "MXN", "total_cost": null, "total_cost_status": null,
@@ -396,12 +402,40 @@ HTTP 201
 | `CHARGE_POINT_NOT_FOUND` | 404 |
 | `CONNECTOR_NOT_FOUND` | 404 |
 | `CHARGE_POINT_OCCUPIED` | 409 |
+| `CHARGE_POINT_NOT_DETECTED` (coming soon: we could not tell which charge point the car is plugged into; the error lists `candidates`) | 409 |
 | `AMBIGUOUS_LOCATION` (`location_id` belongs to more than one charging partner) | 409 |
 | `LOCATION_BLOCKED` | 409 |
 | `REQUEST_IN_PROGRESS` | 409 |
 | `TOKEN_ERROR` (driver could not be authorized at the charging partner) | 502 |
 | `SESSION_START_FAILED` | 502 |
 | `BLOCKS_UNAVAILABLE` (could not check whether the charge point is blocked, retry shortly) | 503 |
+
+### Plug in, tap Start (coming soon)
+
+For car makers and apps that know when the car is plugged in. The driver plugs in and taps Start. No charger to pick.
+
+1. Find the location from the car's GPS once: `GET /locations?lat=19.4402&lng=-99.2038&radius_km=0.2`.
+2. When the driver taps Start, call `POST /sessions` with `reference`, `location_id`, `driver_ref`, `plugged_at` and `connector`, without `charge_point_id`.
+3. We find the charge point that turned occupied when the car was plugged in, and start it. Show the driver "Charging at {physical_reference}".
+4. If we can't tell which one, you get `409 CHARGE_POINT_NOT_DETECTED` with `candidates`. Show them, then send the driver's pick with the same `reference` and its `charge_point_id`. Don't resend the same request.
+
+```json
+HTTP 409
+{
+  "error": {
+    "code": "CHARGE_POINT_NOT_DETECTED",
+    "message": "Could not tell which charge point the car is plugged into.",
+    "candidates": [
+      { "charge_point_id": "MX*EXA*E0142A", "connector_id": "1", "physical_reference": "A1", "status": "BLOCKED" },
+      { "charge_point_id": "MX*EXA*E0142B", "connector_id": "1", "physical_reference": "A2", "status": "AVAILABLE" }
+    ]
+  }
+}
+```
+
+**Safety.** If the car sees no current within 60 seconds of `session.started`, call `POST /sessions/{id}/stop`.
+
+**Several cars, one account.** Send the same `driver_ref`. Each car's request is matched on its own.
 
 ### `GET /sessions/{id}`
 
@@ -416,6 +450,7 @@ charger's final record, `FINAL` once it is confirmed, or `IN_REVIEW` while it is
     "status": "COMPLETED",
     "location_id": "LOC-CDMX-0142",
     "charge_point_id": "MX*EXA*E0142A",
+    "physical_reference": "A1",
     "connector_id": "1",
     "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
     "kwh": 40.2, "currency": "MXN",

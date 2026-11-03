@@ -27,6 +27,8 @@ Each test charge point is its own location, `NC-` plus its name, for example `NC
 | `SBX-HOLD` | Final cost is held for review. | `COMPLETED` with `total_cost: null` and `total_cost_status: IN_REVIEW` |
 | `SBX-NOTARIFF` | No tariff available at start. | `422 NO_TARIFF` |
 | `SBX-MX` | Normal charge in Mexico City, priced in MXN. | Same as `SBX-OK` |
+| `SBX-PLUG` (coming soon) | Car plugged in. Start without `charge_point_id`. | Charge point detected: `201 PENDING`, then same as `SBX-OK` |
+| `SBX-PLUG2` (coming soon) | Two cars plugged in at once. Location `NC-SBX-PLUG2` has two charge points. | `409 CHARGE_POINT_NOT_DETECTED` with two `candidates`. Send one with the same `reference`. |
 
 **Also test on any charge point**
 
@@ -54,13 +56,14 @@ Connect your OCPI 2.2.1 test environment to our sandbox. We run the full flow ag
 
 1. Credentials exchange (`versions` and `details`).
 2. Locations and tariffs sync.
-3. Token push and authorization.
-4. `START_SESSION` and `STOP_SESSION` on a charge point you choose.
-5. Session updates while charging.
-6. CDR delivery, checked against your tariff.
+3. Status on plug-in: we plug in a vehicle without starting, and the charge point must turn `BLOCKED` or `CHARGING` within 10 seconds.
+4. Token push and authorization.
+5. `START_SESSION` and `STOP_SESSION` on a charge point you choose.
+6. Session updates while charging.
+7. CDR delivery, checked against your tariff.
 
 **Before going live**
 
-1. All six steps pass.
+1. All seven steps pass.
 2. We confirm the CDR totals match your tariff.
 3. Switch to production credentials.
