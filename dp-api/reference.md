@@ -28,11 +28,11 @@ A read API key gives Data, a write key gives Full charging. Keys start with `nc_
 | [Data webhooks](#data-webhooks) | ✓ | ✓ |
 | [Sessions](#sessions) | | ✓ |
 | [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
+| [Payments](#payments) (optional) | | ✓ |
+| [Pay after charging](#pay-after-charging) (optional) | | ✓ |
 | [Receipts and tax invoices](#receipts-and-tax-invoices) (optional) | | ✓ |
 | [Disputes](#disputes) (optional) | | ✓ |
 | [Station feedback](#station-feedback) (optional) | | ✓ |
-| [Payments](#payments) (optional) | | ✓ |
-| [Pay after charging](#pay-after-charging) | | ✓ |
 
 ## Conventions
 
@@ -539,6 +539,48 @@ Wholesale partners only: the price you charged your driver.
 
 Optional server-sent events stream with the same events, for live in-app screens.
 
+<details class="section" id="payments" markdown="1">
+<summary>Payments (optional)</summary>
+
+Tell us which sessions you collected from drivers, so we can match your payment to them. Needs a
+write key.
+
+### `POST /payments`
+
+| Body field | Meaning |
+| --- | --- |
+| `reference` **required** | Your own ID for this payment, up to 200 characters |
+| `paid_at` **required** | When you collected it, ISO 8601 |
+| `currency` **required** | ISO 4217, e.g. `MXN` |
+| `sessions` **required** | 1 to 100 items, each with `session_id` and `amount` |
+
+```json
+{
+  "reference": "PAY-2026-10-03-001",
+  "paid_at": "2026-10-03T09:00:00Z",
+  "currency": "MXN",
+  "sessions": [{ "session_id": "ses_7Hq2Lx", "amount": 372.78 }]
+}
+```
+
+Returns `201` with the stored payment and `received_at`. Sending the same `reference` and body again
+returns `200` with what was stored.
+
+| Error | HTTP |
+| --- | --- |
+| `INVALID_PARAMETER` | 422 |
+| `INVALID_SESSIONS` (a session is unknown or in another currency; nothing is stored) | 422 |
+| `REFERENCE_REUSED` (same `reference`, different body) | 409 |
+
+</details>
+
+<details class="section" id="pay-after-charging" markdown="1">
+<summary>Pay after charging (optional, coming soon)</summary>
+
+Charge the driver after each session. If a payment fails, tell us and we pause charging for that driver until it's paid.
+
+</details>
+
 <details class="section" id="receipts-and-tax-invoices" markdown="1">
 <summary>Receipts and tax invoices (optional, coming soon)</summary>
 
@@ -727,47 +769,5 @@ Returns `201`.
 | `LOCATION_NOT_FOUND` | 404 |
 | `CHARGE_POINT_NOT_FOUND` | 404 |
 | `SESSION_NOT_FOUND` | 404 |
-
-</details>
-
-<details class="section" id="payments" markdown="1">
-<summary>Payments (optional)</summary>
-
-Tell us which sessions you collected from drivers, so we can match your payment to them. Needs a
-write key.
-
-### `POST /payments`
-
-| Body field | Meaning |
-| --- | --- |
-| `reference` **required** | Your own ID for this payment, up to 200 characters |
-| `paid_at` **required** | When you collected it, ISO 8601 |
-| `currency` **required** | ISO 4217, e.g. `MXN` |
-| `sessions` **required** | 1 to 100 items, each with `session_id` and `amount` |
-
-```json
-{
-  "reference": "PAY-2026-10-03-001",
-  "paid_at": "2026-10-03T09:00:00Z",
-  "currency": "MXN",
-  "sessions": [{ "session_id": "ses_7Hq2Lx", "amount": 372.78 }]
-}
-```
-
-Returns `201` with the stored payment and `received_at`. Sending the same `reference` and body again
-returns `200` with what was stored.
-
-| Error | HTTP |
-| --- | --- |
-| `INVALID_PARAMETER` | 422 |
-| `INVALID_SESSIONS` (a session is unknown or in another currency; nothing is stored) | 422 |
-| `REFERENCE_REUSED` (same `reference`, different body) | 409 |
-
-</details>
-
-<details class="section" id="pay-after-charging" markdown="1">
-<summary>Pay after charging (coming soon)</summary>
-
-Charge the driver after each session. If a payment fails, tell us and we pause charging for that driver until it's paid.
 
 </details>
