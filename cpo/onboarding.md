@@ -74,6 +74,8 @@ Authorization: Token <token>
 Requests and responses carry `X-Request-ID` and `X-Correlation-ID`. NetworkCore echoes yours back,
 or generates one if you did not send it.
 
+To update your token, versions URL or roles, for example to add a second party ID, send `PUT /2.2.1/credentials` with your current Token B. The response carries a new Token B: use it from then on. The previous one stops working within a few minutes.
+
 ## Step 4. Locations and tariffs
 
 - **Locations** are pulled from your `locations` endpoint. To keep status live, push changes with
@@ -140,6 +142,7 @@ Base URL: `https://ocpi.networkcore.org`. Interactive reference: [ocpi.networkco
 | --- | --- | --- |
 | `GET` | `/versions` | Supported versions |
 | `GET` | `/2.2.1/details` | Module endpoints |
+| `GET` `PUT` | `/2.2.1/credentials` | Read or update your credentials |
 | `POST` | `/2.2.1/commands/{uid}` | Command results (your `response_url`) |
 | `POST` | `/2.2.1/tokens/{uid}/authorize` | Real-time token authorization |
 | `PUT` | `/2.2.1/tariffs/{country_code}/{party_id}/{tariff_id}` | Tariff push |
