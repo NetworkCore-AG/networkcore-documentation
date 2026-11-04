@@ -32,6 +32,7 @@ A read API key gives Data, a write key gives Full charging. Keys start with `nc_
 | [Disputes](#disputes) (optional) | | ✓ |
 | [Station feedback](#station-feedback) (optional) | | ✓ |
 | [Payments](#payments) (optional) | | ✓ |
+| [Pay after charging](#pay-after-charging) | | ✓ |
 
 ## Conventions
 
@@ -761,5 +762,12 @@ returns `200` with what was stored.
 | `INVALID_PARAMETER` | 422 |
 | `INVALID_SESSIONS` (a session is unknown or in another currency; nothing is stored) | 422 |
 | `REFERENCE_REUSED` (same `reference`, different body) | 409 |
+
+</details>
+
+<details class="section" id="pay-after-charging" markdown="1">
+<summary>Pay after charging (coming soon)</summary>
+
+Charge the driver after each session. If a payment fails, tell us and we pause charging for that driver until it's paid.
 
 </details>
