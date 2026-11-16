@@ -27,7 +27,7 @@ A read API key gives Data, a write key gives Full charging. Keys start with `nc_
 | [Prices](#prices) | ✓ | ✓ |
 | [Data webhooks](#data-webhooks) | ✓ | ✓ |
 | [Sessions](#sessions) | | ✓ |
-| [Charging webhooks and live stream](#charging-webhooks-and-live-stream) | | ✓ |
+| [Live session updates](#live-session-updates) | | ✓ |
 | [Payments](#payments) (optional) | | ✓ |
 | [Pay after charging](#pay-after-charging) (optional) | | ✓ |
 | [Receipts and tax invoices](#receipts-and-tax-invoices) (optional) | | ✓ |
@@ -76,7 +76,7 @@ One shape everywhere:
 
 A missing or invalid key returns `401 UNAUTHORIZED`. A read key on a write endpoint returns
 `403 FORBIDDEN`. A blocked partner gets `403 DP_BLOCKED` everywhere except reading and stopping its
-sessions and `POST /payments`.
+sessions and `POST /payments`. Too many requests returns `429`.
 
 ### Headers
 
@@ -112,6 +112,7 @@ body as `GET /sessions/{id}`:
     "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
     "kwh": 40.2, "currency": "MXN",
     "total_cost": 372.78, "total_cost_status": "FINAL",
+    "cost_breakdown": [{ "type": "ENERGY", "amount": 357.78 }, { "type": "FLAT", "amount": 15.00 }],
     "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
     "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" },
     "created_at": "2026-10-01T15:30:02Z",
@@ -163,7 +164,7 @@ PENDING → ACTIVE → COMPLETED
 | --- | --- |
 | `PENDING` | We sent the start to the charger and are waiting for it to confirm |
 | `ACTIVE` | Energy is flowing |
-| `COMPLETED` | The charger's final record (CDR) arrived and the final amounts are known |
+| `COMPLETED` | Charging ended. The final cost may come later: see `total_cost_status`. |
 | `FAILED` | The charger refused or never confirmed |
 
 ---
@@ -387,6 +388,7 @@ HTTP 201
     "connector_id": "1",
     "start_time": null, "end_time": null,
     "kwh": 0, "currency": "MXN", "total_cost": null, "total_cost_status": null,
+    "cost_breakdown": null,
     "created_at": "2026-10-01T15:30:02Z",
     "updated_at": "2026-10-01T15:30:02Z"
   }
@@ -409,6 +411,7 @@ HTTP 201
 | `REQUEST_IN_PROGRESS` | 409 |
 | `TOKEN_ERROR` (driver could not be authorized at the charging partner) | 502 |
 | `SESSION_START_FAILED` | 502 |
+| `PRICING_UNAVAILABLE` (could not price the session, retry shortly) | 503 |
 | `BLOCKS_UNAVAILABLE` (could not check whether the charge point is blocked, retry shortly) | 503 |
 
 ### Plug in, tap Start (coming soon)
@@ -440,8 +443,10 @@ HTTP 409
 
 ### `GET /sessions/{id}`
 
-One session, live: energy so far, cost so far, status. `total_cost_status` is `ESTIMATED` before the
-charger's final record, `FINAL` once it is confirmed, or `IN_REVIEW` while it is checked.
+One session, live: energy so far, cost so far, status. `total_cost_status` is `ESTIMATED` while
+charging and until the charger's final record arrives, `FINAL` once it is confirmed, `IN_REVIEW`
+while we check it (`total_cost` is `null`), or `NO_CDR` if the record never came (`total_cost` is
+the last estimate).
 
 ```json
 {
@@ -456,6 +461,7 @@ charger's final record, `FINAL` once it is confirmed, or `IN_REVIEW` while it is
     "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
     "kwh": 40.2, "currency": "MXN",
     "total_cost": 372.78, "total_cost_status": "FINAL",
+    "cost_breakdown": [{ "type": "ENERGY", "amount": 357.78 }, { "type": "FLAT", "amount": 15.00 }],
     "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
     "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" },
     "created_at": "2026-10-01T15:30:02Z",
@@ -463,6 +469,8 @@ charger's final record, `FINAL` once it is confirmed, or `IN_REVIEW` while it is
   }
 }
 ```
+
+`cost_breakdown`: what `total_cost` is made of, once `FINAL`. `null` before that.
 
 `receipt_url` and `tax_invoice` (coming soon)
 
@@ -503,7 +511,9 @@ Wholesale partners only: the price you charged your driver.
 | `amount` **required** | Incl. VAT |
 | `currency` **required** | |
 
-## Charging webhooks and live stream
+## Live session updates
+
+Every change to a running session reaches you as a webhook, and `GET /sessions/{id}` always returns the latest state.
 
 | Event | When |
 | --- | --- |
@@ -525,6 +535,7 @@ Wholesale partners only: the price you charged your driver.
     "start_time": "2026-10-01T15:30:41Z", "end_time": "2026-10-01T16:12:30Z",
     "kwh": 40.2, "currency": "MXN",
     "total_cost": 372.78, "total_cost_status": "FINAL",
+    "cost_breakdown": [{ "type": "ENERGY", "amount": 357.78 }, { "type": "FLAT", "amount": 15.00 }],
     "receipt_url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/receipt",
     "tax_invoice": { "status": "ISSUED", "url": "https://dp.networkcore.org/sessions/ses_7Hq2Lx/tax_invoice" },
     "created_at": "2026-10-01T15:30:02Z",
@@ -534,10 +545,6 @@ Wholesale partners only: the price you charged your driver.
 ```
 
 `receipt_url` and `tax_invoice` (coming soon)
-
-### `GET /events` (coming soon)
-
-Optional server-sent events stream with the same events, for live in-app screens.
 
 <details class="section" id="payments" markdown="1">
 <summary>Payments (optional)</summary>
